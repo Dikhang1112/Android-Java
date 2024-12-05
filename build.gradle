@@ -1,0 +1,50 @@
+buildscript {
+    repositories {
+        google()  // Kho lưu trữ Google
+        mavenCentral()  // Kho lưu trữ Maven Central
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.0-rc03'
+    }
+}
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.voggella.android.doan'
+    compileSdkVersion 34
+    defaultConfig {
+        applicationId "com.voggella.android.doan"
+        minSdk 25
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+dependencies {
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
+    implementation "androidx.sqlite:sqlite:2.1.0"  // Dùng SQLite
+    implementation "androidx.sqlite:sqlite-framework:2.1.0"
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.recyclerview:recyclerview:1.2.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
+    implementation 'androidx.multidex:multidex:2.0.1'
+}
