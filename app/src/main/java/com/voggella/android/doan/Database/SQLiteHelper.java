@@ -58,7 +58,7 @@ public class SQLiteHelper extends SQLiteOpenHelper
 
      //Thuoc tinh Budget
      public static String  TB_Budget_Id = "Budget_Id";
-     public static String  TB_Budget_AccountId = "Budget_AccountId";
+     public static String  TB_Budget_UserSdt = "Budget_UserSdt";
      public static String  TB_Budget_Data = "Budget_Data";
      public static String  TB_Budget_Date = "Budget_Date";
 
@@ -79,10 +79,10 @@ public class SQLiteHelper extends SQLiteOpenHelper
                     + COLUMN_USER_SDT + " TEXT PRIMARY KEY, "
                     + COLUMN_USER_NAME + " TEXT, "
                     + COLUMN_USER_PASSWORD + " TEXT, "
-                    + COLUMN_USER_TYPE + " INTEGER, "
                     + COLUMN_USER_CCCD + " TEXT, "
                     + COLUMN_USER_BIRTHDAY + " TEXT, "
-                    + COLUMN_USER_SEX + " INTEGER, "
+                    + COLUMN_USER_SEX + " TEXT,"
+                    + COLUMN_USER_TYPE + " INTEGER DEFAULT 0, "
                     + COLUMN_USER_ADDRESS + " TEXT, "
                     + COLUMN_USER_NOTE + " TEXT"
                     + ")";
@@ -138,10 +138,10 @@ public class SQLiteHelper extends SQLiteOpenHelper
             // Tạo bảng Budget
             String CREATE_BUDGET_TABLE = "CREATE TABLE " + TB_Budget + "("
                     + TB_Budget_Id + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + TB_Budget_AccountId + " INTEGER, "
+                    + TB_Budget_UserSdt + " TEXT, "
                     + TB_Budget_Data + " REAL, "
                     + TB_Budget_Date + " TEXT, "
-                    + "FOREIGN KEY (" + TB_Budget_AccountId + ") REFERENCES " + TB_Account + "(" + TB_Account_Id + ") ON DELETE CASCADE"
+                    + "FOREIGN KEY (" + TB_Budget_UserSdt + ") REFERENCES " + TB_USERS + "(" + COLUMN_USER_SDT + ") ON DELETE CASCADE"
                     + ")";
             db.execSQL(CREATE_BUDGET_TABLE);
             Log.d("SQLiteHelper", "Table " + TB_Budget + " created successfully");
@@ -166,11 +166,24 @@ public class SQLiteHelper extends SQLiteOpenHelper
     }
 
 
-    public void addUser(String sdt, String password, String fullName, String address, String birthDate, String cccd, String sex, String type,String notes) {
+    public void addUser(String sdt, String password, String fullName, String address, String birthDate, String cccd, String sex,String notes, String type) {
+        if (sdt == null || sdt.isEmpty()) {
+            Log.e("SQLiteHelper", "SDT cannot be null or empty!");
+            return;
+        }
         if (isUserExists(sdt)) {
             Log.e("SQLiteHelper", "Người dùng với số điện thoại " + sdt + " đã tồn tại!");
             return;
         }
+
+        int userType = 0; // Giá trị mặc định là false
+        if ("1".equals(type) || "true".equalsIgnoreCase(type)) {
+            userType = 1; // Đặt giá trị true
+        } else if (!"0".equals(type) && !"false".equalsIgnoreCase(type)) {
+            Log.e("SQLiteHelper", "Invalid user type: " + type);
+            return;
+        }
+
         SQLiteDatabase db = null;
         try {
             db = this.getWritableDatabase();
@@ -181,9 +194,10 @@ public class SQLiteHelper extends SQLiteOpenHelper
             values.put(COLUMN_USER_ADDRESS, address);
             values.put(COLUMN_USER_BIRTHDAY, birthDate);
             values.put(COLUMN_USER_CCCD, cccd);
-            values.put(COLUMN_USER_SEX, Integer.parseInt(sex));
-            values.put(COLUMN_USER_TYPE, Integer.parseInt(type));
-            values.put(COLUMN_USER_NOTE, notes);
+            values.put(COLUMN_USER_SEX, sex);
+            values.put(COLUMN_USER_NOTE, notes != null ? notes : "");
+            values.put(COLUMN_USER_TYPE, userType); // Chỉ nhận 0 hoặc 1
+
             long result = db.insert(TB_USERS, null, values);
             if (result == -1) {
                 Log.e("SQLiteHelper", "Failed to insert user with SDT: " + sdt);
@@ -196,7 +210,7 @@ public class SQLiteHelper extends SQLiteOpenHelper
             if (db != null) db.close();
         }
     }
-
+    //Kiem tra xem sdt da ton tai chua
     public boolean isUserExists(String sdt) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = null;
@@ -205,11 +219,9 @@ public class SQLiteHelper extends SQLiteOpenHelper
             return cursor.moveToFirst(); // Trả về true nếu có dữ liệu
         } finally {
             if (cursor != null) cursor.close();
-            db.close();  // Đóng kết nối
         }
     }
-
-
+    //Kim tra Sdt va pass nguoi dung
     public boolean validateUser(String phone, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = null;
@@ -250,6 +262,37 @@ public class SQLiteHelper extends SQLiteOpenHelper
             if (db != null) db.close();
         }
     }
+    //Them Budget vao Database
+    public void addBudget(String userPhone, double data, String date) {
+        SQLiteDatabase db = null;
+        try {
+            db = this.getWritableDatabase();
+
+            // Kiểm tra xem số điện thoại người dùng có tồn tại
+            if (!isUserExists(userPhone)) {
+                Log.e("SQLiteHelper", "User with phone number " + userPhone + " không tồn tại");
+                return;
+            }
+
+            // Chèn thông tin vào bảng Budget
+            ContentValues values = new ContentValues();
+            values.put(TB_Budget_UserSdt, userPhone);
+            values.put(TB_Budget_Data, data);
+            values.put(TB_Budget_Date, date);
+
+            long result = db.insert(TB_Budget, null, values);
+            if (result == -1) {
+                Log.e("SQLiteHelper", "Failed to insert budget");
+            } else {
+                Log.d("SQLiteHelper", "Budget inserted successfully");
+            }
+        } catch (Exception e) {
+            Log.e("SQLiteHelper", "Error adding budget: " + e.getMessage());
+        } finally {
+            if (db != null) db.close();
+        }
+    }
+
 }
 
 
