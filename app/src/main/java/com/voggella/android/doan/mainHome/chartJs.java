@@ -121,7 +121,7 @@ public class ChartJs extends AppCompatActivity {
         BarDataSet barDataSet = new BarDataSet(entries, "Số tiền cho các giao dịch");
         barDataSet.setValueTextSize(10f);
         barDataSet.setValueTextColor(Color.MAGENTA);
-        barDataSet.setColor(getResources().getColor(R.color.colorPrimary));
+        barDataSet.setColor(getResources().getColor(R.color.purple_500));
         barDataSet.setDrawValues(false);
         BarData barData = new BarData(barDataSet);
         barChart.setData(barData);

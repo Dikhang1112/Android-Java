@@ -13,15 +13,13 @@
     <color name="blueduc">#B0E0E6</color>
     <color name="colorPrimary">#C2185B</color>
 
-    <!-- Màu cho Light mode -->
-    <color name="background_main">#F6F1F1</color>
-    <color name="background_header">#FFFFFF</color>
-    <color name="background_card">#00BFFF</color>
-    <color name="text_primary">#000000</color>
-    <color name="text_secondary">#757575</color>
-    <color name="icon_tint">#000000</color>
-    <color name="button_background">#FFFFFF</color>
-    <color name="button_text">#000000</color>
-    <color name="list_background">#FFFFFF</color>
-    <color name="list_divider">#E0E0E0</color>
-</resources>
+    <!-- Màu cho Dark mode -->
+    <color name="background_main">#121212</color>
+    <color name="background_header">#1E1E1E</color>
+    <color name="background_card">#2D2D2D</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B3FFFFFF</color>
+    <color name="icon_tint">#FFFFFF</color>
+    <color name="button_background">#2D2D2D</color>
+    <color name="button_text">#FFFFFF</color>
+</resources> 

@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
@@ -28,6 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.app.AppCompatDelegate.NightMode;
+import android.widget.CompoundButton;
 
 public class mainScreen extends AppCompatActivity {
     private RecyclerView recyclerView;
@@ -40,13 +44,33 @@ public class mainScreen extends AppCompatActivity {
     private TextView textNotificationCount;
     private ImageView imageNoti;
     private int notificationCount = 0; //Bien dem thong bao
+    private Switch switchDarkMode;
+    private boolean isVipUser = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main_screen);
-
+        
+        // Khởi tạo database trước để có thể kiểm tra VIP
         dbHelper = new SQLiteHelper(this);
+        
+        // Lấy thông tin user và kiểm tra VIP
+        phoneUser = getIntent().getStringExtra("USERS_SDT");
+        if (phoneUser != null) {
+            isVipUser = checkIsUserVip(phoneUser);
+            // Áp dụng theme dựa trên trạng thái VIP và darkmode
+            if (isVipUser) {
+                boolean savedDarkMode = getDarkModeState();
+                AppCompatDelegate.setDefaultNightMode(
+                    savedDarkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
+                );
+            } else {
+                // User thường luôn ở light mode
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            }
+        }
+        
+        setContentView(R.layout.main_screen);
 
         // Khởi tạo ImageView và TextView
         ImageView btnDashboard = findViewById(R.id.btn_dashboard);
@@ -55,6 +79,15 @@ public class mainScreen extends AppCompatActivity {
         ImageView btnProfile = findViewById(R.id.btn_profile);
         textNotificationCount = findViewById(R.id.textNotificationCount);
         imageNoti = findViewById(R.id.imageNoti);
+        switchDarkMode = findViewById(R.id.switchDarkMode);
+
+        // Kiểm tra quyền VIP ngay sau khi lấy được phoneUser
+        phoneUser = getIntent().getStringExtra("USERS_SDT");
+        if (phoneUser != null) {
+            checkVipStatus();
+        } else {
+            Log.e("MainScreen", "phoneUser is null");
+        }
 
         // Gắn sự kiện onClick cho từng nút
         btnDashboard.setOnClickListener(v -> {
@@ -174,7 +207,90 @@ public class mainScreen extends AppCompatActivity {
                 recreate();
             });
         });
+
+        // Kiểm tra quyền VIP
+        checkVipStatus();
+
+        // Xử lý sự kiện thay đổi darkmode
+        setupDarkModeSwitch();
     }
+
+    private void checkVipStatus() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Log.d("MainScreen", "Checking VIP status for user: " + phoneUser);
+        
+        try {
+            Cursor cursor = db.query(
+                SQLiteHelper.TB_USERS,
+                new String[]{SQLiteHelper.COLUMN_USER_VIP},
+                SQLiteHelper.COLUMN_USER_SDT + "=?",
+                new String[]{phoneUser},
+                null, null, null
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                @SuppressLint("Range")
+                int vipStatus = cursor.getInt(cursor.getColumnIndex(SQLiteHelper.COLUMN_USER_VIP));
+                isVipUser = (vipStatus == 1);
+                Log.d("MainScreen", "User VIP status: " + isVipUser);
+                
+                runOnUiThread(() -> {
+                    if (isVipUser) {
+                        switchDarkMode.setVisibility(View.VISIBLE);
+                    } else {
+                        switchDarkMode.setVisibility(View.GONE);
+                        // Đảm bảo user thường luôn ở light mode
+                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                    }
+                });
+                
+                cursor.close();
+            }
+        } catch (Exception e) {
+            Log.e("MainScreen", "Error checking VIP status: " + e.getMessage());
+        }
+    }
+
+    private void setupDarkModeSwitch() {
+        if (isVipUser) {
+            switchDarkMode.setVisibility(View.VISIBLE);
+            boolean savedDarkMode = getDarkModeState();
+            switchDarkMode.setChecked(savedDarkMode);
+
+            switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                try {
+                    saveDarkModeState(isChecked);
+                    if (isChecked) {
+                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                    } else {
+                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                    }
+                    // Recreate activity để áp dụng theme mới
+                    recreate();
+                } catch (Exception e) {
+                    Log.e("MainScreen", "Error changing theme: " + e.getMessage());
+                }
+            });
+        } else {
+            switchDarkMode.setVisibility(View.GONE);
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+    }
+
+    // Thêm phương thức lưu trạng thái darkmode
+    private void saveDarkModeState(boolean isDarkMode) {
+        getSharedPreferences("app_settings", MODE_PRIVATE)
+            .edit()
+            .putBoolean("dark_mode_" + phoneUser, isDarkMode)
+            .apply();
+    }
+
+    // Thêm phương thức đọc trạng thái darkmode
+    private boolean getDarkModeState() {
+        return getSharedPreferences("app_settings", MODE_PRIVATE)
+            .getBoolean("dark_mode_" + phoneUser, false);
+    }
+
     private void refreshData() {
         if (itemList != null && multiTypeAdapter != null) {
             itemList.clear();
@@ -336,6 +452,47 @@ public class mainScreen extends AppCompatActivity {
 
         // Hiển thị Dialog
         builder.create().show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (isVipUser) {
+            // Đồng bộ trạng thái switch với theme hiện tại
+            boolean isDarkMode = getDarkModeState();
+            switchDarkMode.setChecked(isDarkMode);
+        }
+    }
+
+    // Thêm phương thức này để xử lý việc chuyển đổi theme
+    @Override
+    public void onNightModeChanged(int mode) {
+        super.onNightModeChanged(mode);
+        recreate();
+    }
+
+    // Thêm phương thức kiểm tra VIP
+    private boolean checkIsUserVip(String phone) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        try {
+            Cursor cursor = db.query(
+                SQLiteHelper.TB_USERS,
+                new String[]{SQLiteHelper.COLUMN_USER_VIP},
+                SQLiteHelper.COLUMN_USER_SDT + "=?",
+                new String[]{phone},
+                null, null, null
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                @SuppressLint("Range")
+                int vipStatus = cursor.getInt(cursor.getColumnIndex(SQLiteHelper.COLUMN_USER_VIP));
+                cursor.close();
+                return vipStatus == 1;
+            }
+        } catch (Exception e) {
+            Log.e("MainScreen", "Error checking VIP status: " + e.getMessage());
+        }
+        return false;
     }
 
 }

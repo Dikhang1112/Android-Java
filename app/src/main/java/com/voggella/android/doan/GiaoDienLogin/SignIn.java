@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -16,12 +17,20 @@ import com.voggella.android.doan.R;
 import com.voggella.android.doan.mainHome.mainScreen;
 
 public class SignIn extends AppCompatActivity {
+    private EditText edtPhone, edtPassword;
+    private SQLiteHelper dbHelper;
+    
     @SuppressLint("Range")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.signin);
-        //Back login
+        
+        dbHelper = new SQLiteHelper(this);
+        
+        edtPhone = findViewById(R.id.user_Sdt);
+        edtPassword = findViewById(R.id.pass_SignIn);
+        
         Button backHome = findViewById(R.id.backLogin);
         backHome.setOnClickListener(view -> {
             Intent intentHome = new Intent(SignIn.this, Login.class);
@@ -30,68 +39,73 @@ public class SignIn extends AppCompatActivity {
             finish();
         });
 
-        //Lay id những element khác
-        EditText edtPhone = findViewById(R.id.user_Sdt);
-        EditText edtPass = findViewById(R.id.pass_SignIn);
         Button signIn = findViewById(R.id.user_SignIn);
-
         signIn.setOnClickListener(v -> {
-            String phone = edtPhone.getText().toString().trim();
-            String pass = edtPass.getText().toString().trim();
-
-            if (phone.isEmpty() || pass.isEmpty()) {
-                Toast.makeText(SignIn.this, "Vui lòng nhập đầy đủ thông tin!", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            SQLiteHelper dbHelper = new SQLiteHelper(SignIn.this);
-
-            try {
-                // Kiểm tra người dùng có hợp lệ hay không
-                boolean isValid = dbHelper.validateUser(phone, pass);
-                if (isValid) {
-                    // Nếu hợp lệ, truy vấn để lấy họ và tên từ cơ sở dữ liệu
-                    SQLiteDatabase db = dbHelper.getReadableDatabase();
-                    Cursor cursor = db.query(SQLiteHelper.TB_USERS,
-                            new String[]{SQLiteHelper.COLUMN_USER_NAME},
-                            SQLiteHelper.COLUMN_USER_SDT + " = ?",
-                            new String[]{phone},
-                            null, null, null);
-
-                    String userFullName = "";
-
-                    if (cursor != null && cursor.moveToFirst()) {
-                        userFullName = cursor.getString(cursor.getColumnIndex(SQLiteHelper.COLUMN_USER_NAME));
-                        cursor.close();
-                    }
-                    //Kiem tra sdt da nhan duoc chua
-                    Log.d("SignIn", "Số điện thoại: " + phone);
-
-                    // Chuyển sang màn hình chờ (ScreenWait) và truyền thông tin người dùng
-                    Intent intentWait = new Intent(SignIn.this, ScreenWait.class);
-                    intentWait.putExtra("USER_FULL_NAME", userFullName);  // Truyền họ và tên người dùng
-                    intentWait.putExtra("USERS_SDT", phone); //Truyen sdt
-                    startActivity(intentWait);
-                    finish();  // Đóng màn hình đăng nhập
-                } else {
-                    Toast.makeText(SignIn.this, "Sai số điện thoại hoặc mật khẩu!", Toast.LENGTH_SHORT).show();
-                }
-            } catch (Exception e) {
-                Toast.makeText(SignIn.this, "Đã xảy ra lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
+            checkLogin();
         });
+
         Button changePass = findViewById(R.id.changepass);
         changePass.setOnClickListener(view -> {
-            String phone = edtPhone.getText().toString().trim();  // Lấy số điện thoại từ EditText
+            String phone = edtPhone.getText().toString().trim();
             if (phone.isEmpty()) {
                 Toast.makeText(SignIn.this, "Vui lòng nhập số điện thoại!", Toast.LENGTH_SHORT).show();
                 return;
             }
-            // Truyền số điện thoại vào Intent khi chuyển sang màn hình ChangePass
             Intent intentChangePass = new Intent(SignIn.this, ChangePass.class);
-            intentChangePass.putExtra("USERS_SDT", phone);  // Truyền số điện thoại vào Intent
+            intentChangePass.putExtra("USERS_SDT", phone);
             intentChangePass.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intentChangePass);
         });
+    }
+
+    private void checkLogin() {
+        String phone = edtPhone.getText().toString().trim();
+        String password = edtPassword.getText().toString().trim();
+
+        Log.d("SignIn", "Attempting login with - Phone: " + phone + ", Password: " + password);
+
+        if (phone.equals("admin") && password.equals("admin")) {
+            Log.d("SignIn", "Admin login successful, launching AdminManagementActivity");
+            try {
+                Intent adminIntent = new Intent(SignIn.this, AdminManagementActivity.class);
+                startActivity(adminIntent);
+                finish();
+            } catch (Exception e) {
+                Log.e("SignIn", "Error launching admin activity: " + e.getMessage());
+                Toast.makeText(this, "Lỗi khi mở trang Admin", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
+        if (TextUtils.isEmpty(phone) || TextUtils.isEmpty(password)) {
+            Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(
+            SQLiteHelper.TB_USERS,
+            new String[]{SQLiteHelper.COLUMN_USER_SDT, SQLiteHelper.COLUMN_USER_PASSWORD},
+            SQLiteHelper.COLUMN_USER_SDT + "=?",
+            new String[]{phone},
+            null, null, null
+        );
+
+        if (cursor.moveToFirst()) {
+            String storedPassword = cursor.getString(
+                cursor.getColumnIndex(SQLiteHelper.COLUMN_USER_PASSWORD));
+            
+            if (password.equals(storedPassword)) {
+                Intent intent = new Intent(SignIn.this, mainScreen.class);
+                intent.putExtra("USERS_SDT", phone);
+                startActivity(intent);
+                finish();
+            } else {
+                Toast.makeText(this, "Sai mật khẩu", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, "Tài khoản không tồn tại", Toast.LENGTH_SHORT).show();
+        }
+        cursor.close();
     }
 }

@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import com.voggella.android.doan.mainHome.TransactionShow;
+import com.voggella.android.doan.Models.UserModel;
 
 import java.time.Year;
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class SQLiteHelper extends SQLiteOpenHelper
 {
     // Tên cơ sở dữ liệu
     private static final String DATABASE_NAME = "ManagementFinancial.db";
-    private static final int DATABASE_VERSION = 5 ; // Tăng giá trị khi thay đổi
+    private static final int DATABASE_VERSION = 7 ; // Tăng giá trị khi thay đổi
 
     //Tên các bảng
     public static final String  TB_Account = "Account";
@@ -46,6 +47,8 @@ public class SQLiteHelper extends SQLiteOpenHelper
     public static final String COLUMN_USER_ADDRESS = "Users_Address";
     public static final String COLUMN_USER_NOTE = "Users_Notes";
     public static final String COLUMN_USER_IMAGE = "Image";
+    public static final String COLUMN_USER_EMAIL = "Users_Email";
+    public static final String COLUMN_USER_VIP = "Users_VIP";
 
     //Thuoc tinh cua Admin
     public static final String  COLUMN_ADMIN_ID = "Admin_Id";
@@ -119,7 +122,6 @@ public class SQLiteHelper extends SQLiteOpenHelper
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // Tạo bảng Users
         try {
             String CREATE_USERS_TABLE = "CREATE TABLE " + TB_USERS + "("
                     + COLUMN_USER_SDT + " TEXT PRIMARY KEY, "
@@ -131,7 +133,9 @@ public class SQLiteHelper extends SQLiteOpenHelper
                     + COLUMN_USER_TYPE + " INTEGER DEFAULT 0, "
                     + COLUMN_USER_ADDRESS + " TEXT, "
                     + COLUMN_USER_NOTE + " TEXT,"
-                    + COLUMN_USER_IMAGE + " TEXT"
+                    + COLUMN_USER_IMAGE + " TEXT,"
+                    + COLUMN_USER_EMAIL + " TEXT,"
+                    + COLUMN_USER_VIP + " INTEGER DEFAULT 0"
                     + ")";
             db.execSQL(CREATE_USERS_TABLE);
             Log.d("SQLiteHelper", "Table " + TB_USERS + " created successfully");
@@ -191,11 +195,22 @@ public class SQLiteHelper extends SQLiteOpenHelper
             Log.d("SQLiteHelper", "Table " + TB_Budget + " created successfully");
 
         } catch (Exception e) {
-            Log.e("SQLiteHelper", "Error creating tables: " + e.getMessage());
+            Log.e("SQLiteHelper", "Error creating tables: " + e.getMessage(), e);
+            throw e;
         }
     }
         @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 7) {
+            try {
+                // Thêm cột email vào bảng Users nếu chưa tồn tại
+                db.execSQL("ALTER TABLE " + TB_USERS + " ADD COLUMN " + 
+                    COLUMN_USER_EMAIL + " TEXT DEFAULT NULL");
+                Log.d("SQLiteHelper", "Added email column to Users table");
+            } catch (Exception e) {
+                Log.e("SQLiteHelper", "Error adding email column: " + e.getMessage());
+            }
+        }
         // Xóa các bảng cũ nếu cần nâng cấp cơ sở dữ liệu
         db.execSQL("DROP TABLE IF EXISTS " + TB_Budget);
         db.execSQL("DROP TABLE IF EXISTS " + TB_Trans);
@@ -477,6 +492,143 @@ public class SQLiteHelper extends SQLiteOpenHelper
             // Không đóng db tại đây nếu hàm khác cần sử dụng db
         }
         return totalAmountByType;
+    }
+
+    public ArrayList<UserModel> getAllUsers() {
+        ArrayList<UserModel> usersList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        
+        try {
+            String[] columns = {
+                COLUMN_USER_SDT,
+                COLUMN_USER_NAME,
+                COLUMN_USER_PASSWORD,
+                COLUMN_USER_EMAIL,
+                COLUMN_USER_VIP  // Thêm cột VIP vào truy vấn
+            };
+            
+            Log.d("SQLiteHelper", "Executing query to get all users...");
+            Cursor cursor = db.query(
+                TB_USERS,
+                columns,
+                null,
+                null,
+                null,
+                null,
+                null
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    @SuppressLint("Range")
+                    String phone = cursor.getString(cursor.getColumnIndex(COLUMN_USER_SDT));
+                    @SuppressLint("Range")
+                    String name = cursor.getString(cursor.getColumnIndex(COLUMN_USER_NAME));
+                    @SuppressLint("Range")
+                    String password = cursor.getString(cursor.getColumnIndex(COLUMN_USER_PASSWORD));
+                    @SuppressLint("Range")
+                    String email = cursor.getString(cursor.getColumnIndex(COLUMN_USER_EMAIL));
+                    @SuppressLint("Range")
+                    int vipStatus = cursor.getInt(cursor.getColumnIndex(COLUMN_USER_VIP));
+                    
+                    UserModel user = new UserModel(phone, name, password, email);
+                    user.setVip(vipStatus == 1);  // Set trạng thái VIP
+                    usersList.add(user);
+                    Log.d("SQLiteHelper", "Added user: " + name + ", VIP: " + (vipStatus == 1));
+                } while (cursor.moveToNext());
+            }
+            
+            if (cursor != null) {
+                cursor.close();
+            }
+            
+            Log.d("SQLiteHelper", "Found " + usersList.size() + " users");
+            return usersList;
+        } catch (Exception e) {
+            Log.e("SQLiteHelper", "Error getting users: " + e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    // Thêm người dùng mới
+    public long addUser(UserModel user) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        
+        values.put(COLUMN_USER_SDT, user.getPhone());
+        values.put(COLUMN_USER_NAME, user.getName());
+        values.put(COLUMN_USER_PASSWORD, user.getPassword());
+        values.put(COLUMN_USER_EMAIL, user.getEmail());
+        
+        return db.insert(TB_USERS, null, values);
+    }
+
+    // Cập nhật thông tin người dùng
+    public int updateUser(UserModel user) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        
+        values.put(COLUMN_USER_NAME, user.getName());
+        values.put(COLUMN_USER_PASSWORD, user.getPassword());
+        values.put(COLUMN_USER_EMAIL, user.getEmail());
+        
+        return db.update(TB_USERS, values, 
+            COLUMN_USER_SDT + "=?", 
+            new String[]{user.getPhone()});
+    }
+
+    // Xóa người dùng
+    public int deleteUser(String phone) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete(TB_USERS, 
+            COLUMN_USER_SDT + "=?", 
+            new String[]{phone});
+    }
+
+    // Thêm phương thức cập nhật trạng thái VIP
+    public boolean updateUserVipStatus(String phone, boolean isVip) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        try {
+            ContentValues values = new ContentValues();
+            values.put(COLUMN_USER_VIP, isVip ? 1 : 0);
+            
+            int result = db.update(TB_USERS, values, 
+                COLUMN_USER_SDT + "=?", 
+                new String[]{phone});
+            
+            Log.d("SQLiteHelper", "Updating VIP status for user " + phone + " to " + isVip + 
+                ". Result: " + (result > 0 ? "success" : "failed"));
+                
+            return result > 0;
+        } catch (Exception e) {
+            Log.e("SQLiteHelper", "Error updating VIP status: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Thêm phương thức kiểm tra trạng thái VIP
+    public boolean isUserVip(String phone) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(TB_USERS,
+                new String[]{COLUMN_USER_VIP},
+                COLUMN_USER_SDT + "=?",
+                new String[]{phone},
+                null, null, null);
+
+            if (cursor != null && cursor.moveToFirst()) {
+                @SuppressLint("Range")
+                int vipStatus = cursor.getInt(cursor.getColumnIndex(COLUMN_USER_VIP));
+                return vipStatus == 1;
+            }
+            return false;
+        } catch (Exception e) {
+            Log.e("SQLiteHelper", "Error checking VIP status: " + e.getMessage());
+            return false;
+        } finally {
+            if (cursor != null) cursor.close();
+        }
     }
 
 }

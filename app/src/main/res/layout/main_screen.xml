@@ -4,15 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F6F1F1"
-    android:orientation="vertical"
-    >
+    android:background="?android:attr/windowBackground"
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimaryDark"
+        android:padding="16dp">
 
         <ImageView
             android:id="@+id/imageAva"
@@ -30,40 +29,54 @@
             android:layout_weight="1"
             android:paddingLeft="15dp"
             android:text="FinTech"
-            android:textColor="@color/black"
+            android:textColor="@color/text_primary"
             android:textSize="40sp"
             android:textStyle="bold" />
 
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp">
 
-            <!-- ImageView -->
-            <ImageView
-                android:id="@+id/imageNoti"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                app:srcCompat="@drawable/noti_homescreen" />
+            <!-- Switch Dark Mode -->
+            <Switch
+                android:id="@+id/switchDarkMode"
+                android:layout_width="56dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
+                android:padding="8dp"
+                android:thumb="@drawable/switch_thumb"
+                android:track="@drawable/switch_track"
+                android:visibility="visible" />
 
-            <!-- TextView nằm trên ImageView -->
-            <TextView
-                android:id="@+id/textNotificationCount"
+            <RelativeLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textSize="16sp"
-                android:textColor="@color/white"
-                android:layout_centerInParent="true"
-               />
-        </RelativeLayout>
+                android:layout_height="wrap_content">
 
+                <ImageView
+                    android:id="@+id/imageNoti"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    app:srcCompat="@drawable/noti_homescreen" />
+
+                <TextView
+                    android:id="@+id/textNotificationCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="16sp"
+                    android:textColor="@color/white"
+                    android:layout_centerInParent="true"/>
+            </RelativeLayout>
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="102dp"
-        android:background="@drawable/round_corner"
-        android:backgroundTint="#00BFFF"
+        android:background="?attr/colorPrimary"
         android:orientation="vertical">
 
         <TextView
@@ -73,7 +86,7 @@
             android:padding="10dp"
             android:text=""
             android:textAlignment="center"
-            android:textColor="@color/white"
+            android:textColor="@color/text_primary"
             android:textSize="30sp" />
 
         <TextView
@@ -82,7 +95,7 @@
             android:layout_height="wrap_content"
             android:text="Ấn vào để nhập số tiền"
             android:textAlignment="center"
-            android:textColor="@color/white"
+            android:textColor="@color/text_primary"
             android:textSize="30sp" />
     </LinearLayout>
 
@@ -96,54 +109,55 @@
 
         <TextView
             android:id="@+id/viewTransctionRecent"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textSize="25dp"
-            android:textStyle="bold"
+            android:layout_marginTop="15dp"
+            android:text="Giao dịch gần đây"
             android:textAlignment="center"
-            android:textColor="@color/black"
-            android:text="Giao dịch gần đây
-" />
+            android:textColor="@color/text_primary"
+            android:textSize="25sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/viewTrans"
         android:layout_width="match_parent"
-        android:layout_height="281dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:layout_marginTop="15dp"
         android:layout_marginBottom="10dp"
-        android:layout_weight="1"
-        android:background="#87CEFA"
+        android:background="?attr/colorPrimary"
         android:focusable="false"
         android:focusableInTouchMode="false" />
 
+    <!-- Bottom Navigation -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="80dp"
         android:layout_weight="1"
         android:gravity="center"
         android:orientation="horizontal"
+        android:background="?attr/colorPrimaryDark"
         android:weightSum="6">
-        <!-- Home Button -->
+        
         <ImageView
             android:id="@+id/btn_home"
             android:layout_width="80dp"
             android:layout_height="70dp"
-            android:background="@android:color/transparent"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Home"
             android:src="@drawable/icon_home"
-            app:tint="#000" />
+            app:tint="@color/text_primary" />
 
         <ImageView
             android:id="@+id/btn_dashboard"
             android:layout_width="80dp"
             android:layout_height="70dp"
-            android:background="@android:color/transparent"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Dashboard"
             android:src="@drawable/icon_chart"
-            app:tint="#000" />
+            app:tint="@color/text_primary" />
 
         <ImageView
             android:id="@+id/btn_add"
@@ -159,20 +173,19 @@
             android:id="@+id/btn_cate"
             android:layout_width="80dp"
             android:layout_height="70dp"
-            android:background="@android:color/transparent"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Cart"
             android:src="@drawable/icon_shopping"
-            app:tint="#000" />
+            app:tint="@color/text_primary" />
 
         <ImageView
             android:id="@+id/btn_profile"
             android:layout_width="80dp"
             android:layout_height="70dp"
-            android:background="@android:color/transparent"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Profile"
             android:src="@drawable/icon_account"
-            app:tint="#000" />
-
+            app:tint="@color/text_primary" />
     </LinearLayout>
 
 </LinearLayout>
