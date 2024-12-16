@@ -1,4 +1,4 @@
-package com.voggella.android.doan.Database;
+package com.voggella.android.doan.Database_Adapter;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
@@ -9,9 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import com.voggella.android.doan.mainHome.TransactionShow;
-import com.voggella.android.doan.Database.UserModel;
 
-import java.time.Year;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +19,7 @@ public class SQLiteHelper extends SQLiteOpenHelper
 {
     // Tên cơ sở dữ liệu
     private static final String DATABASE_NAME = "ManagementFinancial.db";
-    private static final int DATABASE_VERSION = 7 ; // Tăng giá trị khi thay đổi
+    private static final int DATABASE_VERSION = 8 ; // Tăng giá trị khi thay đổi
 
     //Tên các bảng
     public static final String  TB_Account = "Account";
@@ -47,8 +45,7 @@ public class SQLiteHelper extends SQLiteOpenHelper
     public static final String COLUMN_USER_ADDRESS = "Users_Address";
     public static final String COLUMN_USER_NOTE = "Users_Notes";
     public static final String COLUMN_USER_IMAGE = "Image";
-    public static final String COLUMN_USER_EMAIL = "Users_Email";
-    public static final String COLUMN_USER_VIP = "Users_VIP";
+
 
     //Thuoc tinh cua Admin
     public static final String  COLUMN_ADMIN_ID = "Admin_Id";
@@ -133,9 +130,7 @@ public class SQLiteHelper extends SQLiteOpenHelper
                     + COLUMN_USER_TYPE + " INTEGER DEFAULT 0, "
                     + COLUMN_USER_ADDRESS + " TEXT, "
                     + COLUMN_USER_NOTE + " TEXT,"
-                    + COLUMN_USER_IMAGE + " TEXT,"
-                    + COLUMN_USER_EMAIL + " TEXT,"
-                    + COLUMN_USER_VIP + " INTEGER DEFAULT 0"
+                    + COLUMN_USER_IMAGE + " TEXT"
                     + ")";
             db.execSQL(CREATE_USERS_TABLE);
             Log.d("SQLiteHelper", "Table " + TB_USERS + " created successfully");
@@ -201,16 +196,6 @@ public class SQLiteHelper extends SQLiteOpenHelper
     }
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 7) {
-            try {
-                // Thêm cột email vào bảng Users nếu chưa tồn tại
-                db.execSQL("ALTER TABLE " + TB_USERS + " ADD COLUMN " +
-                        COLUMN_USER_EMAIL + " TEXT DEFAULT NULL");
-                Log.d("SQLiteHelper", "Added email column to Users table");
-            } catch (Exception e) {
-                Log.e("SQLiteHelper", "Error adding email column: " + e.getMessage());
-            }
-        }
         // Xóa các bảng cũ nếu cần nâng cấp cơ sở dữ liệu
         db.execSQL("DROP TABLE IF EXISTS " + TB_Budget);
         db.execSQL("DROP TABLE IF EXISTS " + TB_Trans);
@@ -400,6 +385,7 @@ public class SQLiteHelper extends SQLiteOpenHelper
             }
         }
     }
+
     // Giả sử trong SQLiteHelper của bạn có phương thức như sau:
     public List<TransactionShow> getTransactionsByType(String userPhone, String transactionType) {
         List<TransactionShow> transactionList = new ArrayList<>();
@@ -503,8 +489,7 @@ public class SQLiteHelper extends SQLiteOpenHelper
                     COLUMN_USER_SDT,
                     COLUMN_USER_NAME,
                     COLUMN_USER_PASSWORD,
-                    COLUMN_USER_EMAIL,
-                    COLUMN_USER_VIP  // Thêm cột VIP vào truy vấn
+                    COLUMN_USER_TYPE  // Thêm cột VIP vào truy vấn
             };
 
             Log.d("SQLiteHelper", "Executing query to get all users...");
@@ -527,11 +512,9 @@ public class SQLiteHelper extends SQLiteOpenHelper
                     @SuppressLint("Range")
                     String password = cursor.getString(cursor.getColumnIndex(COLUMN_USER_PASSWORD));
                     @SuppressLint("Range")
-                    String email = cursor.getString(cursor.getColumnIndex(COLUMN_USER_EMAIL));
-                    @SuppressLint("Range")
-                    int vipStatus = cursor.getInt(cursor.getColumnIndex(COLUMN_USER_VIP));
+                    int vipStatus = cursor.getInt(cursor.getColumnIndex(COLUMN_USER_TYPE));
 
-                    UserModel user = new UserModel(phone, name, password, email);
+                    UserModel user = new UserModel(phone, name, password);
                     user.setVip(vipStatus == 1);  // Set trạng thái VIP
                     usersList.add(user);
                     Log.d("SQLiteHelper", "Added user: " + name + ", VIP: " + (vipStatus == 1));
@@ -558,7 +541,6 @@ public class SQLiteHelper extends SQLiteOpenHelper
         values.put(COLUMN_USER_SDT, user.getPhone());
         values.put(COLUMN_USER_NAME, user.getName());
         values.put(COLUMN_USER_PASSWORD, user.getPassword());
-        values.put(COLUMN_USER_EMAIL, user.getEmail());
 
         return db.insert(TB_USERS, null, values);
     }
@@ -570,7 +552,7 @@ public class SQLiteHelper extends SQLiteOpenHelper
 
         values.put(COLUMN_USER_NAME, user.getName());
         values.put(COLUMN_USER_PASSWORD, user.getPassword());
-        values.put(COLUMN_USER_EMAIL, user.getEmail());
+
 
         return db.update(TB_USERS, values,
                 COLUMN_USER_SDT + "=?",
@@ -590,7 +572,7 @@ public class SQLiteHelper extends SQLiteOpenHelper
         SQLiteDatabase db = this.getWritableDatabase();
         try {
             ContentValues values = new ContentValues();
-            values.put(COLUMN_USER_VIP, isVip ? 1 : 0);
+            values.put(COLUMN_USER_TYPE, isVip ? 1 : 0);
 
             int result = db.update(TB_USERS, values,
                     COLUMN_USER_SDT + "=?",
@@ -612,14 +594,14 @@ public class SQLiteHelper extends SQLiteOpenHelper
         Cursor cursor = null;
         try {
             cursor = db.query(TB_USERS,
-                    new String[]{COLUMN_USER_VIP},
+                    new String[]{COLUMN_USER_TYPE},
                     COLUMN_USER_SDT + "=?",
                     new String[]{phone},
                     null, null, null);
 
             if (cursor != null && cursor.moveToFirst()) {
                 @SuppressLint("Range")
-                int vipStatus = cursor.getInt(cursor.getColumnIndex(COLUMN_USER_VIP));
+                int vipStatus = cursor.getInt(cursor.getColumnIndex(COLUMN_USER_TYPE));
                 return vipStatus == 1;
             }
             return false;
@@ -630,5 +612,51 @@ public class SQLiteHelper extends SQLiteOpenHelper
             if (cursor != null) cursor.close();
         }
     }
+    //Kiem tra thong tin admin
+    public boolean checkAdmin(String name, String password) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + TB_Admin
+                + " WHERE " + COLUMN_ADMIN_NAME + " = ? AND "
+                + COLUMN_ADMIN_PASSWORD + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{name, password});
+        boolean exists = cursor.getCount() > 0; // Kiểm tra kết quả
+        cursor.close();
+        db.close();
+        return exists;
+    }
+    //Get user infor
+    public Cursor getUserInfo(String sdt) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT " + COLUMN_USER_SDT + ", "
+                + COLUMN_USER_SEX + ", "
+                + COLUMN_USER_BIRTHDAY
+                + " FROM " + TB_USERS
+                + " WHERE " + COLUMN_USER_SDT + " = ?";
+        return db.rawQuery(query, new String[]{sdt});
+    }
+//Get user type
+public int getUserType(String userSdt) {
+    int userType = 0; // Mặc định là 0
+    SQLiteDatabase db = this.getReadableDatabase();
+    Cursor cursor = null;
+
+    try {
+        // Truy vấn cột user_type dựa trên user_sdt
+        String query = "SELECT " + COLUMN_USER_TYPE + " FROM " + TB_USERS + " WHERE " + COLUMN_USER_SDT + "=?";
+        cursor = db.rawQuery(query, new String[]{userSdt});
+
+        // Kiểm tra nếu có dữ liệu
+        if (cursor != null && cursor.moveToFirst()) {
+            userType = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_USER_TYPE));
+        }
+    } catch (Exception e) {
+        Log.e("SQLiteHelper", "Error while fetching user type", e);
+    } finally {
+        if (cursor != null) cursor.close();
+        db.close();
+    }
+    return userType;
+}
+
 
 }

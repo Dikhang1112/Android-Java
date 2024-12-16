@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
     android:background="@drawable/back_shopiing">
 
     <!-- Tiêu đề -->
@@ -21,100 +20,35 @@
         android:fontFamily="sans-serif-medium"
         android:paddingBottom="25dp" />
 
-    <!-- Spinner cho Food -->
+    <!-- Spinner chọn loại giao dịch -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Food"
+        android:text="Chọn loại giao dịch"
         android:textStyle="bold"
         android:textColor="@color/black"
         android:textSize="25sp"
         android:layout_marginTop="40dp"
-        android:paddingBottom="4dp"
-         />
+        android:paddingBottom="4dp" />
     <Spinner
-        android:id="@+id/spinnerFood"
+        android:id="@+id/spinnerTransac"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:spinnerMode="dropdown"
+        android:layout_marginBottom="10dp"
         android:background="@android:drawable/btn_dropdown" />
-
-    <!-- Spinner cho Car -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Car"
-        android:paddingBottom="4dp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
-        android:textSize="25sp" />
-    <Spinner
-        android:id="@+id/spinnerCar"
+    <!-- RecyclerView để hiển thị các giao dịch chi tiết -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewTransactions"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_weight="1"
+        android:background="@color/white"
+        />
+    <com.voggella.android.doan.mainHome.FooterLayout
+        android:id="@+id/footerLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:spinnerMode="dropdown"
-        android:background="@android:drawable/btn_dropdown" />
-
-    <!-- Spinner cho Education -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Education"
-        android:paddingBottom="4dp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
-        android:textSize="25sp" />
-    <Spinner
-        android:id="@+id/spinnerEducation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:spinnerMode="dropdown"
-        android:background="@android:drawable/btn_dropdown" />
-
-    <!-- Spinner cho Medical -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Medical"
-        android:paddingBottom="4dp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
-        android:textSize="25sp" />
-    <Spinner
-        android:id="@+id/spinnerMedical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:spinnerMode="dropdown"
-        android:background="@android:drawable/btn_dropdown" />
-
-    <!-- Spinner cho Shopping -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Shopping"
-        android:paddingBottom="4dp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
-        android:textSize="25sp" />
-    <Spinner
-        android:id="@+id/spinnerShopping"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:spinnerMode="dropdown"
-        android:background="@android:drawable/btn_dropdown" />
-
-    <Button
-        android:id="@+id/btnBackMain"
-        android:layout_marginTop="25dp"
-        android:padding="10dp"
-        android:background="@drawable/round_corner"
-        android:backgroundTint="@color/white"
-        android:textColor="@color/black"
-        android:textStyle="bold"
-        android:textSize="35dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Home" />
-
-
+        android:layout_marginTop="10dp"
+        />
 </LinearLayout>

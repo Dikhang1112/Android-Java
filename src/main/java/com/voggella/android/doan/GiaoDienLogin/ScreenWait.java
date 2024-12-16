@@ -5,6 +5,7 @@ import android.os.CountDownTimer;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -14,23 +15,39 @@ import com.voggella.android.doan.mainHome.mainScreen;
 
 public class ScreenWait extends AppCompatActivity {
 
+    @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.screen_wait);
-        Toast.makeText(ScreenWait.this,
-                "Chuyển sau " + " 5 giây",
-                Toast.LENGTH_SHORT).show();
+
+        // Nhận họ và tên người dùng va sdt từ Intent
+        String userFullName = getIntent().getStringExtra("USER_FULL_NAME");
+        String phoneUser = getIntent().getStringExtra("USERS_SDT");
+
+        //Kiem tra da co thong tin hay chua
+        if (phoneUser == null || phoneUser.isEmpty()) {
+            Log.e("ScreenWait", "Thông tin người dùng không được truyền.");
+            Toast.makeText(ScreenWait.this, "Lỗi: Không có thông tin người dùng!", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(ScreenWait.this, "Chuyển qua trang chủ sau 5 giây...", Toast.LENGTH_SHORT).show();
+        }
+
+        Toast.makeText(ScreenWait.this, "Chuyển qua trang chủ sau 5 giây...", Toast.LENGTH_SHORT).show();
+
         new CountDownTimer(5000, 500) {
             public void onTick(long millisUntilFinished) {
-                // Hiển thị Toast mỗi giây
-
+                // Có thể hiển thị thời gian còn lại ở đây nếu cần
             }
+
             public void onFinish() {
-                // Khi đếm ngược kết thúc, chuyển sang layout 2
+                // Chuyển sang màn hình chính và truyền họ và tên người dùng
                 Intent intentMain = new Intent(ScreenWait.this, mainScreen.class);
+                intentMain.putExtra("USER_FULL_NAME", userFullName);  // Truyền họ và tên người dùng
+                intentMain.putExtra("USERS_SDT", phoneUser);
                 startActivity(intentMain);
-                finish();
+                finish();  // Đóng màn hình chờ
             }
         }.start();
     }
 }
+

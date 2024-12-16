@@ -15,13 +15,13 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import com.voggella.android.doan.Database.SQLiteHelper;
+import com.voggella.android.doan.Database_Adapter.SQLiteHelper;
 import com.voggella.android.doan.R;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
-public class transac_detail extends AppCompatActivity {
+public class add_Trans extends AppCompatActivity {
 
     private Spinner spinnerGroupsCate;
     private TextView tvCate, tvDate, tvCancel;
@@ -30,13 +30,19 @@ public class transac_detail extends AppCompatActivity {
     private ImageView datePickerIcon;
     private SQLiteHelper.CategoryName selectedCategory;
     private Calendar calendar;
+    private String phoneUser;
+    private String userName;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.plus_cate);
 
-        String userPhone = getIntent().getStringExtra("USERS_SDT");
+        Intent intent = getIntent();
+        phoneUser = intent.getStringExtra("USERS_SDT");
+        userName = intent.getStringExtra("USER_FULL_NAME");
+
         // Initialize UI elements
         spinnerGroupsCate = findViewById(R.id.spinner_groupsCate);
         tvCate = findViewById(R.id.tv_cate);
@@ -50,8 +56,8 @@ public class transac_detail extends AppCompatActivity {
         tvCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent backMain = new Intent(transac_detail.this,mainScreen.class);
-                backMain.putExtra("USERS_SDT",userPhone);
+                Intent backMain = new Intent(add_Trans.this,mainScreen.class);
+                backMain.putExtra("USERS_SDT",phoneUser);
                 startActivity(backMain);
                 finish();
             }
@@ -87,7 +93,7 @@ public class transac_detail extends AppCompatActivity {
 
             // Create and show DatePickerDialog
             DatePickerDialog datePickerDialog = new DatePickerDialog(
-                    transac_detail.this,
+                    add_Trans.this,
                     (view, year1, monthOfYear, dayOfMonth) -> {
                         // Set the selected date in the TextView
                         calendar.set(year1, monthOfYear, dayOfMonth);
@@ -111,9 +117,10 @@ public class transac_detail extends AppCompatActivity {
                 return;
             }
             // Insert transaction into the database
-            insertTransaction(userPhone,amount, selectedCategory,note,date);
-            Intent backLoad = new Intent(transac_detail.this,mainScreen.class);
-            backLoad.putExtra("USERS_SDT",userPhone);
+            insertTransaction(phoneUser,amount, selectedCategory,note,date);
+            Intent backLoad = new Intent(add_Trans.this,mainScreen.class);
+            backLoad.putExtra("USERS_SDT",phoneUser);
+            backLoad.putExtra("USER_FULL_NAME",userName);
             startActivity(backLoad);
             finish();
         });
